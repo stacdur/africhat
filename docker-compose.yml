@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: africhat-mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: africhat
+
+  redis:
+    image: redis:7-alpine
+    container_name: africhat-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+  backend:
+    build: ./backend
+    container_name: africhat-backend
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongodb
+      - redis
+    environment:
+      - PORT=8080
+      - MONGODB_URI=mongodb://mongodb:27017/africhat
+      - REDIS_URL=redis://redis:6379
+
+  frontend:
+    build: ./frontend
+    container_name: africhat-frontend
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    environment:
+      - REACT_APP_API_URL=http://localhost:8080
+      - REACT_APP_WS_URL=ws://localhost:8080
+
+volumes:
+  mongo-data:
+  redis-data:
